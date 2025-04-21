@@ -26,9 +26,15 @@ if not SECRET_KEY:
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
+DEBUG_ADMIN_EMAIL = os.getenv("DEBUG_ADMIN_EMAIL", "admin@example.com")
+
+if DEBUG_MODE:
+    print("WARNING: DEBUG_MODE is enabled. Authentication will be bypassed.")
+    print("This should NEVER be enabled in production environments.")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=not DEBUG_MODE)
 
 
 class Token(BaseModel):
@@ -60,6 +66,26 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 async def get_current_user(session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)) -> models.User:
+    # If debug mode is enabled and token is None, use the debug admin user
+    if DEBUG_MODE and token is None:
+        # Try to get the admin user, create if doesn't exist
+        admin_user = crud.get_user_by_email(session=session, email=DEBUG_ADMIN_EMAIL)
+        if not admin_user:
+            # Create a default admin user if it doesn't exist
+            admin_password = get_password_hash("admin")
+            admin_user = crud.create_user(
+                session=session,
+                user=models.UserCreate(
+                    email=DEBUG_ADMIN_EMAIL,
+                    password=admin_password,
+                    is_active=True,
+                    is_admin=True
+                )
+            )
+            print(f"Created debug admin user: {DEBUG_ADMIN_EMAIL}")
+        return admin_user
+
+    # Normal authentication flow
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

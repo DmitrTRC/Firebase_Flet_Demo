@@ -1,4 +1,3 @@
-
 import flet as ft
 import requests
 import os
@@ -8,13 +7,14 @@ load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
+
 def main(page: ft.Page):
     page.title = "Todo App"
-    page.vertical_alignment = ft.MainAxisAlignment.START # Center content vertically
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER # Center content horizontally
-    page.theme_mode = ft.ThemeMode.LIGHT # Start with light theme
+    page.vertical_alignment = ft.MainAxisAlignment.START  # Center content vertically
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER  # Center content horizontally
+    page.theme_mode = ft.ThemeMode.LIGHT  # Start with light theme
 
-    auth_token = None # Store the JWT token
+    auth_token = None  # Store the JWT token
 
     # --- API Client ---
     def api_call(method, endpoint, data=None, headers=None):
@@ -32,14 +32,14 @@ def main(page: ft.Page):
             elif method.upper() == "POST":
                 response = requests.post(url, headers=_headers, json=data)
             elif method.upper() == "PUT":
-                 response = requests.put(url, headers=_headers, json=data)
+                response = requests.put(url, headers=_headers, json=data)
             elif method.upper() == "DELETE":
-                 response = requests.delete(url, headers=_headers)
+                response = requests.delete(url, headers=_headers)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
 
-            response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
-            if response.status_code == 204: # No Content
+            response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+            if response.status_code == 204:  # No Content
                 return None
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -47,27 +47,26 @@ def main(page: ft.Page):
             show_snackbar(f"API Error: {e.response.json().get('detail', e) if e.response else e}", ft.colors.RED)
             return None
         except Exception as e:
-             print(f"An unexpected error occurred: {e}")
-             show_snackbar(f"Error: {e}", ft.colors.RED)
-             return None
-
+            print(f"An unexpected error occurred: {e}")
+            show_snackbar(f"Error: {e}", ft.colors.RED)
+            return None
 
     # --- UI Components & Views ---
     email_input = ft.TextField(label="Email", autofocus=True, width=300)
     password_input = ft.TextField(label="Password", password=True, can_reveal_password=True, width=300)
     todo_input = ft.TextField(label="New Todo", width=300)
     todos_list_view = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
-    error_text = ft.Text(color=ft.colors.RED) # To display login/signup errors
+    error_text = ft.Text(color=ft.colors.RED)  # To display login/signup errors
 
     def show_snackbar(message, color):
-        page.show_snack_bar(
-            ft.SnackBar(ft.Text(message), bgcolor=color)
-        )
+        page.snack_bar = ft.SnackBar(ft.Text(message), bgcolor=color)
+        page.snack_bar.open = True
+        page.update()
 
     # --- Event Handlers ---
     def login(e):
         nonlocal auth_token
-        error_text.value = "" # Clear previous errors
+        error_text.value = ""  # Clear previous errors
         email = email_input.value
         password = password_input.value
         if not email or not password:
@@ -79,7 +78,7 @@ def main(page: ft.Page):
         try:
             response = requests.post(
                 f"{BACKEND_URL}/token",
-                data={"username": email, "password": password}, # FastAPI's OAuth2PasswordRequestForm expects form data
+                data={"username": email, "password": password},  # FastAPI's OAuth2PasswordRequestForm expects form data
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
             response.raise_for_status()
@@ -89,31 +88,30 @@ def main(page: ft.Page):
                 # Clear inputs and navigate to todo view
                 email_input.value = ""
                 password_input.value = ""
-                email_input.focus() # Reset focus
+                email_input.focus()  # Reset focus
                 page.go("/todos")
                 show_snackbar("Login successful!", ft.colors.GREEN)
             else:
-                 error_text.value = "Login failed: No token received."
+                error_text.value = "Login failed: No token received."
 
         except requests.exceptions.HTTPError as http_err:
-             detail = "Login failed"
-             try:
-                 # Try to get specific error from backend response
-                 error_json = http_err.response.json()
-                 detail = error_json.get("detail", detail)
-             except ValueError: # If response is not JSON
-                 pass
-             error_text.value = f"{detail} (Status: {http_err.response.status_code})"
-             print(f"HTTP error during login: {http_err} - {http_err.response.text}") # Log detailed error
+            detail = "Login failed"
+            try:
+                # Try to get specific error from backend response
+                error_json = http_err.response.json()
+                detail = error_json.get("detail", detail)
+            except ValueError:  # If response is not JSON
+                pass
+            error_text.value = f"{detail} (Status: {http_err.response.status_code})"
+            print(f"HTTP error during login: {http_err} - {http_err.response.text}")  # Log detailed error
         except requests.exceptions.RequestException as req_err:
             error_text.value = f"Connection error: {req_err}"
-            print(f"Request error during login: {req_err}") # Log detailed error
+            print(f"Request error during login: {req_err}")  # Log detailed error
         except Exception as ex:
-             error_text.value = f"An unexpected error occurred: {ex}"
-             print(f"Unexpected error during login: {ex}") # Log detailed error
+            error_text.value = f"An unexpected error occurred: {ex}"
+            print(f"Unexpected error during login: {ex}")  # Log detailed error
 
         page.update()
-
 
     def signup(e):
         error_text.value = "" # Clear previous errors
@@ -138,7 +136,7 @@ def main(page: ft.Page):
         else:
             # Error handled by api_call's snackbar
             # If api_call returns None, an error occurred
-             if not page.snack_bar: # Avoid overwriting API error snackbar if already shown
+             if not page.snack_bar or not page.snack_bar.open: # Avoid overwriting API error snackbar if already shown
                  error_text.value = "Signup failed. Email might already exist." # Generic fallback
 
         page.update()
@@ -150,38 +148,38 @@ def main(page: ft.Page):
             page.update()
             return
 
-        todo_data = {"title": title, "description": ""} # Add description later if needed
+        todo_data = {"title": title, "description": ""}  # Add description later if needed
         # The backend endpoint is /users/{user_id}/todos/, but we rely on auth
         # The /todos/ POST endpoint should implicitly use the authenticated user
         # Let's adjust backend or frontend call if needed. Assuming /todos/ POST works with auth:
-        response = api_call("POST", "/todos/", data=todo_data) # Assuming POST /todos/ is the correct user-specific endpoint
+        response = api_call("POST", "/todos/",
+                            data=todo_data)  # Assuming POST /todos/ is the correct user-specific endpoint
 
         if response and "id" in response:
             todo_input.value = ""
-            load_todos() # Reload the list
+            load_todos()  # Reload the list
             show_snackbar("Todo added!", ft.colors.GREEN)
         else:
-             show_snackbar("Failed to add todo.", ft.colors.RED)
+            show_snackbar("Failed to add todo.", ft.colors.RED)
         page.update()
-
 
     def delete_todo(todo_id):
         response = api_call("DELETE", f"/todos/{todo_id}")
         # DELETE returns 204 No Content on success, api_call returns None for 204
-        if response is None: # Check for successful deletion (None means 204 was likely returned)
-             load_todos()
-             show_snackbar("Todo deleted.", ft.colors.GREEN)
+        if response is None:  # Check for successful deletion (None means 204 was likely returned)
+            load_todos()
+            show_snackbar("Todo deleted.", ft.colors.GREEN)
         else:
-             # Error handled by api_call's snackbar
-             show_snackbar("Failed to delete todo.", ft.colors.RED) # Fallback message
+            # Error handled by api_call's snackbar
+            show_snackbar("Failed to delete todo.", ft.colors.RED)  # Fallback message
         page.update()
 
     def toggle_todo_done(todo_id, current_status):
         update_data = {"is_done": not current_status}
         response = api_call("PUT", f"/todos/{todo_id}", data=update_data)
         if response and "id" in response:
-             load_todos() # Reload to show updated status
-             show_snackbar("Todo status updated.", ft.colors.GREEN)
+            load_todos()  # Reload to show updated status
+            show_snackbar("Todo status updated.", ft.colors.GREEN)
         else:
             show_snackbar("Failed to update todo status.", ft.colors.RED)
         page.update()
@@ -207,24 +205,24 @@ def main(page: ft.Page):
     def load_todos():
         nonlocal auth_token
         if not auth_token:
-            page.go("/login") # Redirect if not logged in
+            page.go("/login")  # Redirect if not logged in
             return
 
         # Backend endpoint for user's todos: /users/me/todos/
         todos = api_call("GET", "/users/me/todos/")
 
-        todos_list_view.controls.clear() # Clear existing todos
-        if todos is not None: # Check if API call was successful
+        todos_list_view.controls.clear()  # Clear existing todos
+        if todos is not None:  # Check if API call was successful
             if isinstance(todos, list):
                 if todos:
                     for todo in todos:
                         todos_list_view.controls.append(create_todo_item_row(todo))
                 else:
-                     todos_list_view.controls.append(ft.Text("No todos yet!"))
+                    todos_list_view.controls.append(ft.Text("No todos yet!"))
             else:
                 # Handle cases where API returns unexpected data format
-                 todos_list_view.controls.append(ft.Text("Could not load todos."))
-                 print(f"Unexpected API response format for todos: {todos}")
+                todos_list_view.controls.append(ft.Text("Could not load todos."))
+                print(f"Unexpected API response format for todos: {todos}")
 
         else:
             # Error handled by api_call's snackbar
@@ -237,13 +235,11 @@ def main(page: ft.Page):
 
         page.update()
 
-
     def logout(e):
         nonlocal auth_token
         auth_token = None
         show_snackbar("Logged out.", ft.colors.BLUE)
         page.go("/login")
-
 
     # --- Views ---
     login_view_content = ft.Column(
@@ -280,8 +276,8 @@ def main(page: ft.Page):
                 [
                     ft.Text("My Todos", size=30),
                     ft.IconButton(ft.icons.LOGOUT, tooltip="Logout", on_click=logout)
-                 ],
-                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
             ),
 
             ft.Row(
@@ -292,62 +288,60 @@ def main(page: ft.Page):
                 alignment=ft.MainAxisAlignment.CENTER,
             ),
             ft.Divider(),
-            ft.Container(content=todos_list_view, expand=True), # Make list view expandable
+            ft.Container(content=todos_list_view, expand=True),  # Make list view expandable
         ],
         # alignment=ft.MainAxisAlignment.START, # Align content to the top
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        expand=True # Make the main column take available space
+        expand=True  # Make the main column take available space
     )
-
 
     # --- Routing ---
     def route_change(route):
         page.views.clear()
         if page.route == "/login":
-            email_input.value = "" # Clear fields when navigating
+            email_input.value = ""  # Clear fields when navigating
             password_input.value = ""
             error_text.value = ""
             page.views.append(
                 ft.View(
                     "/login",
                     [login_view_content],
-                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                      vertical_alignment=ft.MainAxisAlignment.CENTER # Center view content
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER  # Center view content
                 )
             )
         elif page.route == "/signup":
-             email_input.value = ""
-             password_input.value = ""
-             error_text.value = ""
-             page.views.append(
+            email_input.value = ""
+            password_input.value = ""
+            error_text.value = ""
+            page.views.append(
                 ft.View(
                     "/signup",
                     [signup_view_content],
-                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                      vertical_alignment=ft.MainAxisAlignment.CENTER
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER
                 )
             )
         elif page.route == "/todos":
-            if not auth_token: # Protect route
-                 page.go("/login")
-                 return # Stop processing this route change
+            if not auth_token:  # Protect route
+                page.go("/login")
+                return  # Stop processing this route change
 
-            load_todos() # Load todos when navigating to the view
+            load_todos()  # Load todos when navigating to the view
             page.views.append(
                 ft.View(
                     "/todos",
                     [todos_view_content],
-                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                      vertical_alignment=ft.MainAxisAlignment.START # Align todo view content to top
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    vertical_alignment=ft.MainAxisAlignment.START  # Align todo view content to top
                 )
             )
         else:
-             # Default route if logged in, else login
-             if auth_token:
-                 page.go("/todos")
-             else:
-                 page.go("/login")
-
+            # Default route if logged in, else login
+            if auth_token:
+                page.go("/todos")
+            else:
+                page.go("/login")
 
         page.update()
 
@@ -364,8 +358,7 @@ def main(page: ft.Page):
 
 
 # Run the app
-ft.app(target=main) # Use target=main for desktop app
+ft.app(target=main)  # Use target=main for desktop app
 
 # To run as a web app, you might use:
 # ft.app(target=main, view=ft.AppView.WEB_BROWSER)
-

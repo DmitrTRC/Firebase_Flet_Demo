@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 from sqlmodel import Session, select
+from sqlalchemy.sql.selectable import Select
 from . import models, security
 
 # User CRUD
@@ -7,8 +8,9 @@ def get_user(session: Session, user_id: int) -> Optional[models.User]:
     return session.get(models.User, user_id)
 
 def get_user_by_email(session: Session, email: str) -> Optional[models.User]:
-    statement = select(models.User).where(models.User.email == email)
-    return session.exec(statement).first()
+    # Cast the select statement to the expected type
+    query = cast(Select, select(models.User).where(models.User.email == email))
+    return session.exec(query).first()
 
 def create_user(session: Session, user: models.UserCreate) -> models.User:
     try:
@@ -25,8 +27,11 @@ def create_user(session: Session, user: models.UserCreate) -> models.User:
 
 # Todo CRUD
 def get_todos(session: Session, owner_id: int, skip: int = 0, limit: int = 100) -> List[models.Todo]:
-    statement = select(models.Todo).where(models.Todo.owner_id == owner_id).offset(skip).limit(limit)
-    return session.exec(statement).all()
+    # Cast the select statement to the expected type
+    query = cast(Select, select(models.Todo).where(models.Todo.owner_id == owner_id).offset(skip).limit(limit))
+    result = session.exec(query).all()
+    # Cast the result to the expected List[models.Todo] type
+    return cast(List[models.Todo], result)
 
 def create_user_todo(session: Session, todo: models.TodoCreate, user_id: int) -> models.Todo:
     try:
@@ -35,11 +40,8 @@ def create_user_todo(session: Session, todo: models.TodoCreate, user_id: int) ->
         if not user:
             raise ValueError(f"User with id {user_id} not found")
 
-        # Use model_dump() if using Pydantic v2+, or dict() for Pydantic v1
-        try:
-            todo_data = todo.model_dump()  # For Pydantic v2+
-        except AttributeError:
-            todo_data = todo.dict()  # Fallback for Pydantic v1
+        # Use model_dump() with Pydantic v2+
+        todo_data = todo.model_dump()
 
         db_todo = models.Todo(**todo_data, owner_id=user_id)
         session.add(db_todo)
@@ -51,16 +53,14 @@ def create_user_todo(session: Session, todo: models.TodoCreate, user_id: int) ->
         raise ValueError(f"Error creating todo: {str(e)}")
 
 def get_todo(session: Session, todo_id: int, owner_id: int) -> Optional[models.Todo]:
-    statement = select(models.Todo).where(models.Todo.id == todo_id, models.Todo.owner_id == owner_id)
-    return session.exec(statement).first()
+    # Cast the select statement to the expected type
+    query = cast(Select, select(models.Todo).where(models.Todo.id == todo_id, models.Todo.owner_id == owner_id))
+    return session.exec(query).first()
 
 def update_todo(session: Session, db_todo: models.Todo, todo_in: models.TodoUpdate) -> models.Todo:
     try:
-        # Use model_dump() if using Pydantic v2+, or dict() for Pydantic v1
-        try:
-            todo_data = todo_in.model_dump(exclude_unset=True)  # For Pydantic v2+
-        except AttributeError:
-            todo_data = todo_in.dict(exclude_unset=True)  # Fallback for Pydantic v1
+        # Use model_dump() with Pydantic v2+
+        todo_data = todo_in.model_dump(exclude_unset=True)
 
         # Only update allowed fields
         allowed_fields = {"title", "description", "is_done"}

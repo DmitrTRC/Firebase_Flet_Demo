@@ -1,14 +1,31 @@
-
-autopep8
+# ---------- 10. FINALLY UPDATE: requirements.txt ----------
+# Web Framework
 fastapi~=0.115.12
-uvicorn[standard]
+uvicorn[standard]~=0.29.0
+pydantic[email]~=2.11.3
+python-multipart~=0.0.9
+email-validator~=2.1.2
+
+# Database
 sqlmodel~=0.0.14
+sqlalchemy>=2.0.0
+
+# Authentication
 python-jose[cryptography]~=3.4.0
 passlib[bcrypt]~=1.7.4
-python-multipart
-email-validator
+
+# Utilities
 python-dotenv~=1.1.0
-flet~=0.27.6
+click~=8.1.7
+pyyaml~=6.0.1
+
+# Client
 requests~=2.32.3
-pydantic~=2.11.3
-sqlalchemy>=2.0.0
+flet~=0.27.6
+
+# Code Quality
+autopep8~=2.1.0
+
+# Test dependencies
+pytest~=8.0.0
+httpx~=0.27.0  # Required by TestClient

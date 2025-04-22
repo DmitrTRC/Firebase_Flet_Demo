@@ -54,11 +54,11 @@ def main(page: ft.Page):
         except requests.exceptions.RequestException as e:
             error_detail = e.response.json().get('detail', str(e)) if hasattr(e, 'response') and e.response else str(e)
             print(f"API Error: {error_detail}")
-            show_snackbar(f"API Error: {error_detail}", ft.colors.RED)
+            show_snackbar(f"API Error: {error_detail}", ft.Colors.RED)
             return None
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
-            show_snackbar(f"Error: {e}", ft.colors.RED)
+            show_snackbar(f"Error: {e}", ft.Colors.RED)
             return None
 
     # --- UI Components & Views ---
@@ -66,7 +66,7 @@ def main(page: ft.Page):
     password_input = ft.TextField(label="Password", password=True, can_reveal_password=True, width=300)
     todo_input = ft.TextField(label="New Todo", width=300)
     todos_list_view = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
-    error_text = ft.Text(color=ft.colors.RED)
+    error_text = ft.Text(color=ft.Colors.RED)
 
     def show_snackbar(message, color):
         page.snack_bar = ft.SnackBar(ft.Text(message), bgcolor=color)
@@ -106,7 +106,7 @@ def main(page: ft.Page):
                     email_input.value = ""
                     password_input.value = ""
                     page.go("/todos")
-                    show_snackbar("Login successful!", ft.colors.GREEN)
+                    show_snackbar("Login successful!", ft.Colors.GREEN)
                 else:
                     auth_token = None
                     error_text.value = "Failed to get user information."
@@ -151,7 +151,7 @@ def main(page: ft.Page):
         response = api_call("POST", "/users/", data=user_data)
 
         if response and "id" in response:
-            show_snackbar("Signup successful! Please log in.", ft.colors.GREEN)
+            show_snackbar("Signup successful! Please log in.", ft.Colors.GREEN)
             email_input.value = ""
             password_input.value = ""
             error_text.value = ""
@@ -165,7 +165,7 @@ def main(page: ft.Page):
         nonlocal auth_token, current_user
         auth_token = None
         current_user = None
-        show_snackbar("Logged out.", ft.colors.BLUE)
+        show_snackbar("Logged out.", ft.Colors.BLUE)
         page.go("/login")
 
     # --- Todo Management ---
@@ -173,7 +173,7 @@ def main(page: ft.Page):
         title = todo_input.value
 
         if not title:
-            show_snackbar("Todo title cannot be empty.", ft.colors.ORANGE)
+            show_snackbar("Todo title cannot be empty.", ft.Colors.ORANGE)
             return
 
         # Create todo with title and optional description
@@ -183,9 +183,9 @@ def main(page: ft.Page):
         if response and "id" in response:
             todo_input.value = ""
             load_todos()
-            show_snackbar("Todo added!", ft.colors.GREEN)
+            show_snackbar("Todo added!", ft.Colors.GREEN)
         else:
-            show_snackbar("Failed to add todo.", ft.colors.RED)
+            show_snackbar("Failed to add todo.", ft.Colors.RED)
 
         page.update()
 
@@ -195,9 +195,9 @@ def main(page: ft.Page):
         # DELETE returns 204 No Content on success
         if response is None:
             load_todos()
-            show_snackbar("Todo deleted.", ft.colors.GREEN)
+            show_snackbar("Todo deleted.", ft.Colors.GREEN)
         else:
-            show_snackbar("Failed to delete todo.", ft.colors.RED)
+            show_snackbar("Failed to delete todo.", ft.Colors.RED)
 
         page.update()
 
@@ -207,9 +207,9 @@ def main(page: ft.Page):
 
         if response and "id" in response:
             load_todos()
-            show_snackbar("Todo status updated.", ft.colors.GREEN)
+            show_snackbar("Todo status updated.", ft.Colors.GREEN)
         else:
-            show_snackbar("Failed to update todo status.", ft.colors.RED)
+            show_snackbar("Failed to update todo status.", ft.Colors.RED)
 
         page.update()
 
@@ -222,10 +222,10 @@ def main(page: ft.Page):
                     on_change=lambda e, tid=todo['id'], status=todo['is_done']: toggle_todo_done(tid, status),
                 ),
                 ft.IconButton(
-                    ft.icons.DELETE_OUTLINE,
+                    ft.Icons.DELETE_OUTLINE,
                     tooltip="Delete Todo",
                     on_click=lambda e, tid=todo['id']: delete_todo(tid),
-                    icon_color=ft.colors.RED_ACCENT_700
+                    icon_color=ft.Colors.RED_ACCENT_700
                 )
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -291,14 +291,14 @@ def main(page: ft.Page):
             ft.Row(
                 [
                     ft.Text("My Todos", size=30, weight=ft.FontWeight.BOLD),
-                    ft.IconButton(ft.icons.LOGOUT, tooltip="Logout", on_click=logout)
+                    ft.IconButton(ft.Icons.LOGOUT, tooltip="Logout", on_click=logout)
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN
             ),
             ft.Row(
                 [
                     todo_input,
-                    ft.FloatingActionButton(icon=ft.icons.ADD, on_click=add_todo),
+                    ft.FloatingActionButton(icon=ft.Icons.ADD, on_click=add_todo),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
             ),

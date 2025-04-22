@@ -82,7 +82,7 @@ class TestFrontendLogin(unittest.TestCase):
 
         # Verify snackbar was shown with success message
         assert self.page.snack_bar is not None
-        assert self.page.snack_bar.bgcolor == ft.colors.GREEN
+        assert self.page.snack_bar.bgcolor == ft.Colors.GREEN
 
         # Check that input fields were cleared
         assert self.email_input.value == ""

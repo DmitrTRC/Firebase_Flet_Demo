@@ -73,7 +73,7 @@ async def get_current_user(
             # Create a debug admin user
             admin = User(
                 email="admin@example.com",
-                hashed_password=get_password_hash("adminpassword"),
+                hashed_password=get_password_hash("developer"),
                 is_active=True,
                 is_admin=True
             )

@@ -12,7 +12,7 @@ sqlalchemy>=2.0.0
 
 # Authentication
 python-jose[cryptography]~=3.4.0
-passlib[bcrypt]~=1.7.4
+bcrypt==3.2.2
 
 # Utilities
 python-dotenv~=1.1.0
@@ -21,7 +21,7 @@ pyyaml~=6.0.1
 
 # Client
 requests~=2.32.3
-flet~=0.27.6
+flet>=0.26.0
 
 # Code Quality
 autopep8~=2.1.0
